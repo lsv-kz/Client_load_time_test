@@ -1,0 +1,5 @@
+MaxThreads  1000
+
+Timeout     120
+
+EndLine crlf      # crlf = "\r\n" / lf = "\n"
