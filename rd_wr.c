@@ -7,7 +7,7 @@
 //    #define POLLHUP     0x0010    /* "Положили трубку" */
 //    #define POLLNVAL    0x0020    /* Неверный запрос: fd не открыт */
 void get_time(char *s, int size);
-/*====================================================================*/
+//======================================================================
 int wait_read(int fd, int timeout)
 {
     struct pollfd fdrd;
@@ -33,20 +33,16 @@ retry:
     else if (!ret)
         return -408;
 
-//  if (fdrd.revents & POLLERR)
-    //  printf("<%s:%d> POLLERR fdrd.revents = 0x%02x\n", __func__, __LINE__, fdrd.revents);
-    
     if (fdrd.revents & POLLIN)
         return 1;
     else if (fdrd.revents & POLLHUP)
     {
-//      printf("<%s:%d>***** POLLHUP *****0x%02x\n", __func__, __LINE__, fdrd.revents);
         return 0;
     }
 
     return -1;
 }
-/*====================================================================*/
+//======================================================================
 static int wait_write(int fd, int timeout)
 {
     int ret, errno_ = 0;
@@ -124,14 +120,13 @@ int read_timeout(int fd, char *buf, int len, int timeout)
         }
         else if (fdrd.revents & POLLHUP)
         {
-    //      printf("<%s:%d>***** POLLHUP *****0x%02x; ret=%d\n", __func__, __LINE__, fdrd.revents, read_bytes);
             break;
         }
     }
 
     return read_bytes;
 }
-/*====================================================================*/
+//======================================================================
 int write_timeout(int fd, const char *buf, int len, int timeout)
 {
     int write_bytes = 0, ret, errno_ = 0;
@@ -159,7 +154,7 @@ int write_timeout(int fd, const char *buf, int len, int timeout)
 
     return write_bytes;
 }
-/*====================================================================*/
+//======================================================================
 int read_to_space(int fd_in, char *buf, long sizeBuf, long *size, int timeout)
 {
     int rd, allRD = 0, errno_ = 0;
@@ -227,7 +222,7 @@ int read_to_space2(int fd_in, char *buf, long size, int timeout)
 
     return allRD;
 }
-/*====================================================================*/
+//======================================================================
 int read_line_sock(int fd, char *buf, int size, int timeout)
 {   
     int ret, n, read_bytes = 0;
@@ -269,16 +264,47 @@ int read_line_sock(int fd, char *buf, int size, int timeout)
 
     return -414;
 }
-/*====================================================================*/
+//======================================================================
+int read_headers_to_stdout(response *resp)
+{
+    int ret, read_bytes = 0, i = 0;
+
+    for ( ; ; ++i)
+    {
+        ret = read_line_sock(resp->servSocket, 
+                            resp->buf, 
+                            sizeof(resp->buf) - 1,
+                            resp->timeout);
+        if (ret <= 0)
+            goto exit_;
+
+        read_bytes += ret;
+        *(resp->buf + ret) = 0;
+        printf("%s", resp->buf);
+        if (i == 0)
+            sscanf(resp->buf, "%*s %d %*s", &resp->respStatus);
+        
+        ret = strcspn(resp->buf, "\r\n");
+        if (ret == 0)
+        {
+            ret = read_bytes;
+            goto exit_;
+        }
+    }
+    printf("<%s():%d>  Error read_headers(): ?\n", __func__, __LINE__);
+
+exit_:
+    return ret;
+}
+//======================================================================
 int read_headers(response *resp)
 {
     int ret, read_bytes = 0;
-//printf("<%s():%d> resp->timeout=%d\n", __func__, __LINE__, resp->timeout);
+
     ret = read_line_sock(resp->servSocket, 
                             resp->buf, 
                             sizeof(resp->buf) - 1,
                             resp->timeout);
-
     if (ret <= 0)
     {
         goto exit_;
@@ -415,8 +441,6 @@ int read_req_file_(FILE *f, char *req, int size)
     *req = 0;
     char *p = req;
     int len = 0, read_startline = 0;
-    
-    
 
     while (len < size)
     {
@@ -469,7 +493,6 @@ int read_req_file_(FILE *f, char *req, int size)
                 int m = strlen(end_line);
                 if ((len + m) < size)
                 {
-                    //strcat(p, end_line);
                     memcpy(p, end_line, m + 1);
                     len += m;
                     p += m;
@@ -482,7 +505,6 @@ int read_req_file_(FILE *f, char *req, int size)
                 int m = strlen(end_line);
                 if ((len + m) < size)
                 {
-                    //strcat(p, end_line);
                     memcpy(p, end_line, m + 1);
                     len += m;
                     p += m;

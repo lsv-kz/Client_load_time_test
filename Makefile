@@ -16,7 +16,6 @@ OBJS = $(OBJSDIR)/client.o \
 client: $(OBJS) 
 	$(CC) $(CFLAGS) -o $@ $(OBJS)  -lpthread
 
-
 $(OBJSDIR)/client.o: client.c client.h
 	$(CC) $(CFLAGS) -c client.c -o $@
 
@@ -34,9 +33,6 @@ $(OBJSDIR)/rd_wr.o: rd_wr.c client.h
 
 $(OBJSDIR)/functions.o: functions.c client.h
 	$(CC) $(CFLAGS) -c functions.c -o $@
-
-#$(OBJSDIR)/%.o: %.c $(DEPS)
-#	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f client

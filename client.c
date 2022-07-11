@@ -79,11 +79,12 @@ int main(int argc, char *argv[])
     char s[256], path[512];
     char buf_req[1024];
     int numProc = 1;
-printf("*********** %s *************\n", argv[0]);
+    printf(" %s\n\n", argv[0]);
     int run_ = 1;
     while (run_)
     {
-        printf("============================================\n [q: exit] or [Input name request file] >>> ");
+        printf("============================================\n"
+               "Input [Name request file] or [q: Exit]\n   >>> conf/");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
@@ -97,7 +98,7 @@ printf("*********** %s *************\n", argv[0]);
         if ((n = read_req_file(path, buf_req, sizeof(buf_req))) <= 0)
             continue;
         printf("%s", buf_req);
-        printf("------------------------------\nPort: ");
+        printf("--------------------------------------------\nPort: ");
         fflush(stdout);
         std_in(Port, sizeof(Port));
         if (Port[0] == 'q')
@@ -141,15 +142,6 @@ printf("*********** %s *************\n", argv[0]);
         time(&now);
         printf("%s\n", ctime(&now));
 
-        char buf[512];
-        snprintf(buf, sizeof(buf), "HEAD / HTTP/1.1\r\n"
-                "Host: %s\r\n"
-                "User-Agent: ???\r\n"
-                "Connection: close\r\n\r\n", Host);
-
-        printf("----------------------------------\n"
-               "%s"
-               "----------------------------------\n", buf);
         int servSocket = create_client_socket(Host, Port);
         if (servSocket == -1)
         {
@@ -163,9 +155,9 @@ printf("*********** %s *************\n", argv[0]);
             continue;
         }
 
-        printf("IP: %s, FAMILY: %s\n----------------------------------\n", IP, get_str_ai_family(ai_family));
+        printf("IP: %s, FAMILY: %s\n", IP, get_str_ai_family(ai_family));
 
-        n = write_timeout(servSocket, buf, strlen(buf), 10);
+        n = write_timeout(servSocket, buf_req, strlen(buf_req), Timeout);
         if (n < 0)
         {
             printf("<%s:%d> Error send request\n", __func__, __LINE__);
@@ -173,22 +165,26 @@ printf("*********** %s *************\n", argv[0]);
             close(servSocket);
             continue;
         }
+        printf("--------------------------------------------\n"
+               "%s"
+               "--------------------------------------------\n", buf_req);
+        response resp;
+        resp.servSocket = servSocket;
+        resp.timeout = Timeout;
 
-        n = read_timeout(servSocket, buf, sizeof(buf) - 1, 10);
-        if (n < 0)
+        n = read_headers_to_stdout(&resp);
+        shutdown(servSocket, SHUT_RDWR);
+        close(servSocket);
+        if (n <= 0)
         {
-            printf("<%s:%d> Error read response: %s\n   [%s:%s %d]\n", __func__, __LINE__, 
-                            strerror(errno), Host, Port, servSocket);
-            shutdown(servSocket, SHUT_RDWR);
-            close(servSocket);
+            printf("<%s:%d> Error read headers: %d\n", __func__, __LINE__, n);
             continue;
         }
 
-        buf[n] = 0;
-        printf("%s\n",buf);
-        shutdown(servSocket, SHUT_RDWR);
-        close(servSocket);
-
+        printf("*************** Status: %d ****************\n", resp.respStatus);
+        if (resp.respStatus >= 300)
+            continue;
+        //--------------------------------------------------------------
         int num = 0;
 
         while (num < numProc)

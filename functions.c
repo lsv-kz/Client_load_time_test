@@ -41,9 +41,10 @@ int strcmp_case(const char *s1, const char *s2)
     return 0;
 }
 //======================================================================
-char *strstr_case(char *s1, char *s2)
+const char *strstr_case(const char *s1, const char *s2)
 {
-    char c1, c2, *p1, *p2;
+    const char *p1, *p2;
+    char c1, c2;
     
     if (!s1 || !s2) return NULL;
     if (*s2 == 0) return s1;
@@ -121,26 +122,4 @@ int parse_headers(response *resp)
     }
 
     return 0;
-}
-//======================================================================
-void hex_dump_stdout(const void *p, int n)
-{
-    int count, addr = 0, col;
-    unsigned char *buf = (unsigned char*)p;
-    char str[18];
-
-    for (count = 0; count < n;)
-    {
-        printf("%08X  ", addr);
-        for (col = 0, addr = addr + 0x10; (count < n) && (col < 16); count++, col++)
-        {
-            if (col == 8) printf(" ");
-            printf("%02X ", *(buf+count));
-            str[col] = (*(buf + count) >= 32 && *(buf + count) < 127) ? *(buf + count) : '.';
-        }
-        str[col] = 0;
-        if (col <= 8) printf(" ");
-        printf("%*s  %s\n",(16 - (col)) * 3, "", str);
-    }
-    printf("\n");
 }

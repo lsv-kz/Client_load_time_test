@@ -77,6 +77,7 @@ void wait_exit_all_thr(void);
 int wait_thr_exit(int n);
 Error get_err();
 //----------------------------------------------------------------------
+int read_headers_to_stdout(response *resp);
 int read_headers(response *req);
 int read_to_space(int fd_in, char *buf, long size_buf, long *size, int timeout);
 int read_to_space2(int fd_in, char *buf, long size, int timeout);
@@ -93,11 +94,8 @@ int create_client_socket_ip6(const char *ip, const char *port);
 int get_ip(int sock, char *ip, int size_ip);
 const char *get_str_ai_family(int ai_family);
 //----------------------------------------------------------------------
-void hex_dump_stdout(const void *p, int n);
-void hex_dump_file(FILE *f, void *p, int n);
-//----------------------------------------------------------------------
 void std_in(char *s, int len);
-char *strstr_case(char *s1, char *s2);
+const char *strstr_case(const char *s1, const char *s2);
 int strcmp_case(const char *s1, const char *s2);
 int parse_headers(response *resp);
 
