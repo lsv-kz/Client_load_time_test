@@ -196,7 +196,7 @@ void get_request_(request *req, response *resp)
             break;
         }
 
-        if (!strcmp(method, "HEAD"))
+        if (!strcmp(Method, "HEAD"))
         {
             inc_good_conn();
             

@@ -30,8 +30,9 @@ extern int MaxThreads;
 extern int NumThreads;
 extern int NumRequests;
 extern int Timeout;
-extern char method[16];
-extern int connKeepAlive;
+extern char Method[16];
+extern char Uri[1024];
+extern int ConnKeepAlive;
 
 typedef struct {
     int  num_thr;

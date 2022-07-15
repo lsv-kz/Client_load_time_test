@@ -11,8 +11,9 @@ int MaxThreads = 380;
 int NumThreads = 1;
 int NumRequests = 1;
 
-char method[16];
-int connKeepAlive = 1;
+char Method[16];
+char Uri[1024];
+int ConnKeepAlive = 1;
 //======================================================================
 int read_conf_file()
 {
@@ -67,8 +68,6 @@ int read_conf_file()
         fprintf(stderr, " Error end_line ?\n");
         return -1;
     }
-    
-    printf("\n");
 
     return 0;
 }
@@ -77,14 +76,14 @@ int main(int argc, char *argv[])
 {
     int n;
     char s[256], path[512];
-    char buf_req[1024];
+    char buf_req[1024], first_req[1500];
     int numProc = 1;
     printf(" %s\n\n", argv[0]);
     int run_ = 1;
     while (run_)
     {
         printf("============================================\n"
-               "Input [Name request file] or [q: Exit]\n   >>> conf/");
+               "Input [Name request file] or [q: Exit]\n>>> conf/");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
@@ -92,12 +91,14 @@ int main(int argc, char *argv[])
 
         snprintf(path, sizeof(path), "conf/%s", s);
 
+        printf("------------- conf/config.txt --------------\n");
         if (read_conf_file())
             continue;
-        
+
         if ((n = read_req_file(path, buf_req, sizeof(buf_req))) <= 0)
             continue;
-        printf("%s", buf_req);
+
+        printf("-------------- %s ------------------\n%s", path, buf_req);
         printf("--------------------------------------------\nPort: ");
         fflush(stdout);
         std_in(Port, sizeof(Port));
@@ -145,7 +146,7 @@ int main(int argc, char *argv[])
         int servSocket = create_client_socket(Host, Port);
         if (servSocket == -1)
         {
-            printf("<%s:%d> Error: create_client_socket(%s, %s)\n", __func__, __LINE__, Host, Port);
+            printf("<%s:%d> Error: create_client_socket(%s:%s)\n", __func__, __LINE__, Host, Port);
             continue;
         }
 
@@ -157,7 +158,12 @@ int main(int argc, char *argv[])
 
         printf("IP: %s, FAMILY: %s\n", IP, get_str_ai_family(ai_family));
 
-        n = write_timeout(servSocket, buf_req, strlen(buf_req), Timeout);
+        snprintf(first_req, sizeof(first_req), "HEAD %s HTTP/1.1\r\n"
+                                                "Host: %s\r\n"
+                                                "User-Agent: ???\r\n"
+                                                "Connection: close\r\n"
+                                                "\r\n", Uri, Host);
+        n = write_timeout(servSocket, first_req, strlen(first_req), Timeout);
         if (n < 0)
         {
             printf("<%s:%d> Error send request\n", __func__, __LINE__);
@@ -167,7 +173,7 @@ int main(int argc, char *argv[])
         }
         printf("--------------------------------------------\n"
                "%s"
-               "--------------------------------------------\n", buf_req);
+               "--------------------------------------------\n", first_req);
         response resp;
         resp.servSocket = servSocket;
         resp.timeout = Timeout;

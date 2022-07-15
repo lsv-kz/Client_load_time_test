@@ -65,7 +65,7 @@ int child_proc(int numProc, const char *buf_req)
     req.req = buf_req;
     req.num_thr = NumThreads;
     req.num_requests = NumRequests;
-    req.connKeepAlive = connKeepAlive;
+    req.connKeepAlive = ConnKeepAlive;
     req.timeout = Timeout;
     //snprintf(req.host, sizeof(req.host), "%s", Host);
     snprintf(req.ip, sizeof(req.ip), "%s", IP);

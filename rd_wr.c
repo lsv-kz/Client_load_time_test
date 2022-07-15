@@ -453,7 +453,7 @@ int read_req_file_(FILE *f, char *req, int size)
             {
                 if (read_startline == 0)
                 {
-                    if (sscanf(p, "%s %*s", method) != 1)
+                    if (sscanf(p, "%15s %1023s %*s", Method, Uri) != 2)
                         return -4;
                     read_startline = 1;
                 }
@@ -462,9 +462,9 @@ int read_req_file_(FILE *f, char *req, int size)
                     if (strstr_case(p, "Connection"))
                     {
                         if (strstr_case(p + 11, "close"))
-                            connKeepAlive = 0;
+                            ConnKeepAlive = 0;
                         else
-                            connKeepAlive = 1;
+                            ConnKeepAlive = 1;
                     }
                     else if (strstr_case(p, "Host:"))
                     {
@@ -508,7 +508,7 @@ int read_req_file_(FILE *f, char *req, int size)
                     memcpy(p, end_line, m + 1);
                     len += m;
                     p += m;
-                    if (strcmp(method, "POST"))
+                    if (strcmp(Method, "POST"))
                         return len;
                     else
                     {
