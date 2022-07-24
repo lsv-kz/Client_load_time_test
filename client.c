@@ -80,6 +80,9 @@ int main(int argc, char *argv[])
     int numProc = 1;
     printf(" %s\n\n", argv[0]);
     int run_ = 1;
+
+    signal(SIGPIPE, SIG_IGN);
+
     while (run_)
     {
         printf("============================================\n"
@@ -166,7 +169,7 @@ int main(int argc, char *argv[])
         n = write_timeout(servSocket, first_req, strlen(first_req), Timeout);
         if (n < 0)
         {
-            printf("<%s:%d> Error send request\n", __func__, __LINE__);
+            fprintf(stderr, "<%s:%d> Error send request\n", __func__, __LINE__);
             shutdown(servSocket, SHUT_RDWR);
             close(servSocket);
             continue;
@@ -183,7 +186,7 @@ int main(int argc, char *argv[])
         close(servSocket);
         if (n <= 0)
         {
-            printf("<%s:%d> Error read headers: %d\n", __func__, __LINE__, n);
+            fprintf(stderr, "<%s:%d> Error read headers: %d\n", __func__, __LINE__, n);
             continue;
         }
 
@@ -204,14 +207,18 @@ int main(int argc, char *argv[])
             }
             else if (chld < 0)
             {
-                printf("<%s:%d> Error fork(): %s\n", __func__, __LINE__, strerror(errno));
+                fprintf(stderr, "<%s:%d> Error fork(): %s\n", __func__, __LINE__, strerror(errno));
                 exit(1);
             }
 
             num++;
         }
 
-        while (wait(NULL) != -1);
+        pid_t pid;
+        while ((pid = wait(NULL)) != -1)
+        {
+            printf("<%s:%d> wait() pid: %d\n", __func__, __LINE__, pid);
+        }
     }
 
     return 0;

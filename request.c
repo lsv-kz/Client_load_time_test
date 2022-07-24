@@ -3,7 +3,7 @@
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t waitExitThr = PTHREAD_COND_INITIALIZER;
 pthread_cond_t connClose = PTHREAD_COND_INITIALIZER;
-static int count_thr, max_thr = 0, good_conn = 0, num_conn = 0;
+static int count_thr, max_thr = 0, all_req = 0;
 static long long allRD = 0;
 //======================================================================
 void init_count_thr(void)
@@ -15,30 +15,8 @@ void init_count_thr(void)
 void inc_good_conn(void)
 {
 pthread_mutex_lock(&mutex1);
-    ++good_conn;
+    ++all_req;
 pthread_mutex_unlock(&mutex1);
-}
-//======================================================================
-void inc_num_conn(void)
-{
-pthread_mutex_lock(&mutex1);
-    ++num_conn;
-pthread_mutex_unlock(&mutex1);
-}
-//======================================================================
-void dec_num_conn(void)
-{
-pthread_mutex_lock(&mutex1);
-    --num_conn;
-pthread_mutex_unlock(&mutex1);
-}
-//======================================================================
-int get_num_conn(void)
-{
-pthread_mutex_lock(&mutex1);
-    int ret = num_conn;
-pthread_mutex_unlock(&mutex1);
-    return ret;
 }
 //======================================================================
 void add_all_read(int n)
@@ -48,9 +26,9 @@ pthread_mutex_lock(&mutex1);
 pthread_mutex_unlock(&mutex1);
 }
 //======================================================================
-int get_good_conn(void)
+int get_all_req(void)
 {
-    return good_conn;
+    return all_req;
 }
 //======================================================================
 int get_max_thr(void)
@@ -134,13 +112,10 @@ void get_request_(request *req, response *resp)
             err.num_err_sock++;
             return;
         }
-        inc_num_conn();
     }
 
-    while (num_req < req->num_requests)
+    for ( ; (num_req < req->all_requests); ++num_req)
     {
-        ++num_req;
-        
         if (req->connKeepAlive == 0)
         {
             resp->servSocket = req->create_sock(req->ip, req->port);
@@ -150,21 +125,17 @@ void get_request_(request *req, response *resp)
                 err.num_err_sock++;
                 break;
             }
-            inc_num_conn();
         }
 
         n = write_timeout(resp->servSocket, req->req, strlen(req->req), req->timeout);
-        if (n < 0)
+        if (n <= 0)
         {
             err.errno_wr = n;
             err.num_err_wr++;
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
-            dec_num_conn();
             if (req->connKeepAlive == 1)
-            {
                 break;
-            }
 
             continue;
         }
@@ -178,7 +149,6 @@ void get_request_(request *req, response *resp)
             err.num_err_rd++;
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
-            dec_num_conn();
             if (req->connKeepAlive == 1)
             {
                 break;
@@ -192,7 +162,6 @@ void get_request_(request *req, response *resp)
             fprintf(stderr, "*** Status: %d ***\n", resp->respStatus);
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
-            dec_num_conn();
             break;
         }
 
@@ -200,11 +169,10 @@ void get_request_(request *req, response *resp)
         {
             inc_good_conn();
             
-            if ((num_req >= req->num_requests) || (req->connKeepAlive == 0))
+            if ((num_req >= (req->all_requests - 1)) || (req->connKeepAlive == 0))
             {
                 shutdown(resp->servSocket, SHUT_RDWR);
                 close(resp->servSocket);
-                dec_num_conn();
             }
             continue;
         }
@@ -218,7 +186,6 @@ void get_request_(request *req, response *resp)
                 err.num_err_rd++;
                 shutdown(resp->servSocket, SHUT_RDWR);
                 close(resp->servSocket);
-                dec_num_conn();
                 if (req->connKeepAlive == 1)
                 {
                     break;
@@ -245,7 +212,6 @@ void get_request_(request *req, response *resp)
                 err.num_err_rd++;
                 shutdown(resp->servSocket, SHUT_RDWR);
                 close(resp->servSocket);
-                dec_num_conn();
                 if (req->connKeepAlive == 1)
                 {
                     break;
@@ -261,14 +227,14 @@ void get_request_(request *req, response *resp)
             inc_good_conn();
         }
 
-        if ((num_req >= req->num_requests) || (req->connKeepAlive == 0))
+        if ((num_req >= (req->all_requests - 1)) || (req->connKeepAlive == 0))
         {
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
-            dec_num_conn();
+            break;
         }
     }
-    
+
     return;
 }
 //======================================================================
@@ -276,10 +242,11 @@ void *get_request(void *arg)
 {
     request *req = (request*)arg;
     response resp;
-    
+
     resp.timeout = req->timeout;
     get_request_(req, &resp);
-    
+
+    free(req);
     thr_exit_();
     return NULL;
 }

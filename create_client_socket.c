@@ -67,7 +67,7 @@ int create_client_socket_ip4(const char *ip, const char *port)
     sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(sockfd == -1)
     {
-        printf("<%s> Error socket(): %s\n", __func__, strerror(errno));
+        fprintf(stderr, "<%s> Error socket(): %s\n", __func__, strerror(errno));
         return -1;
     }
 
@@ -76,7 +76,7 @@ int create_client_socket_ip4(const char *ip, const char *port)
 
     if (inet_pton(PF_INET, ip, &(sin4.sin_addr)) < 1)
     {
-        printf("<%s> Error inet_pton [%s]: %s\n", __func__, ip, strerror(errno));
+        fprintf(stderr, "<%s> Error inet_pton [%s]: %s\n", __func__, ip, strerror(errno));
         return -1;
     }
 
@@ -84,19 +84,19 @@ int create_client_socket_ip4(const char *ip, const char *port)
 
     if (connect(sockfd, (struct sockaddr *)(&sin4), sizeof(sin4)) != 0)
     {
-        printf("<%s> Error connect(): %s\n", __func__, strerror(errno));
+        //fprintf(stderr, "<%s> Error connect(): %s\n", __func__, strerror(errno));
         close(sockfd);
         return -1;
     }
 
     int flags = fcntl(sockfd, F_GETFL);
     if (flags == -1)
-        printf("<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+        fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
     else
     {
         flags |= O_NONBLOCK;
         if (fcntl(sockfd, F_SETFL, flags) == -1)
-            printf("<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+            fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
     }
 
     return sockfd;
@@ -116,7 +116,7 @@ int create_client_socket_ip6(const char * host, const char *port)
     sockfd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd == -1) 
     {
-        printf("<%s> Error socket(): %s\n", __func__, strerror(errno));
+        fprintf(stderr, "<%s> Error socket(): %s\n", __func__, strerror(errno));
         return -1;
     }
 
@@ -124,19 +124,19 @@ int create_client_socket_ip6(const char * host, const char *port)
 
     if (connect(sockfd, (struct sockaddr *)(&sin6), sizeof(sin6))!=0)
     {
-        printf("<%s> Error connect(): %s\n", __func__, strerror(errno));
+        fprintf(stderr, "<%s> Error connect(): %s\n", __func__, strerror(errno));
         close(sockfd);
         return -1;
     }
 
     int flags = fcntl(sockfd, F_GETFL);
     if (flags == -1)
-        printf("<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+        fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
     else
     {
         flags |= O_NONBLOCK;
         if (fcntl(sockfd, F_SETFL, flags) == -1)
-            printf("<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+            fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
     }
 
     return sockfd;

@@ -25,7 +25,7 @@ retry:
     if (ret == -1)
     {
         errno_ = errno;
-        printf("<%s:%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
+        fprintf(stderr, "<%s:%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
         if (errno == EINTR)
             goto retry;
         return -errno_;
@@ -55,19 +55,19 @@ retry:
     if (ret == -1)
     {
         errno_ = errno;
-        printf("<%s():%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
+        //fprintf(stderr, "<%s:%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
         if (errno == EINTR)
               goto retry;
         return -errno_;
     }
     else if (!ret)
-        return -408;
+        return -ETIMEDOUT;
 
     if (fdwr.revents == POLLOUT)
         return 1;
 
-    printf("<%s():%d> Error fdwr.revents = 0x%02x\n", __func__, __LINE__, fdwr.revents);
-    return -1;
+    //fprintf(stderr, "<%s:%d> Error fdwr.revents = 0x%02x\n", __func__, __LINE__, fdwr.revents);
+    return -ECONNRESET;
 }
 //======================================================================
 int read_timeout(int fd, char *buf, int len, int timeout)
@@ -87,17 +87,17 @@ int read_timeout(int fd, char *buf, int len, int timeout)
         if (ret == -1)
         {
             errno_ = errno;
-            printf("<%s():%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
+            fprintf(stderr, "<%s:%d> Error poll(): %s\n", __func__, __LINE__, strerror(errno));
             if (errno == EINTR)
                 continue;
             return -errno_;
         }
         else if (!ret)
-            return -408;
+            return -ETIMEDOUT;
 
         if (fdrd.revents & POLLERR)
         {
-            printf("<%s:%d> POLLERR fdrd.revents = 0x%02x\n", __func__, __LINE__, fdrd.revents);
+            fprintf(stderr, "<%s:%d> POLLERR fdrd.revents = 0x%02x\n", __func__, __LINE__, fdrd.revents);
             return -__LINE__;
         }
         else if (fdrd.revents & POLLIN)
@@ -106,7 +106,7 @@ int read_timeout(int fd, char *buf, int len, int timeout)
             if (ret == -1)
             {
                 errno_ = errno;
-                printf("<%s:%d> Error read(): %s\n", __func__, __LINE__, strerror(errno));
+                fprintf(stderr, "<%s:%d> Error read(): %s\n", __func__, __LINE__, strerror(errno));
                 return -errno_;
             }
             else if (ret == 0)
@@ -134,14 +134,14 @@ int write_timeout(int fd, const char *buf, int len, int timeout)
     while (len > 0)
     {
         ret = wait_write(fd, timeout);
-        if (ret < 0)
+        if (ret <= 0)
             return ret;
 
         ret = write(fd, buf, len);
         if (ret == -1)
         {
-            errno_ =errno;
-            printf("<%s():%d> Error write(): %s\n", __func__, __LINE__, strerror(errno));
+            errno_ = errno;
+            //fprintf(stderr, "<%s:%d> Error write(): %s\n", __func__, __LINE__, strerror(errno));
             if (errno == EINTR)
                 continue;
             return -errno_;
@@ -176,7 +176,7 @@ int read_to_space(int fd_in, char *buf, long sizeBuf, long *size, int timeout)
             errno_ = errno;
             if (errno == EINTR)
                 continue;
-            printf("   Error read(%d,): %s\n", fd_in, strerror(errno));
+            fprintf(stderr, "   Error read_to_space(%d,): %s\n", fd_in, strerror(errno));
             return -errno_;
         }
         else if (rd == 0)
@@ -209,7 +209,7 @@ int read_to_space2(int fd_in, char *buf, long size, int timeout)
             errno_ = errno;
             if (errno == EINTR)
                 continue;
-            printf("   Error read(%d,): %s\n", fd_in, strerror(errno));
+            fprintf(stderr, "   Error read_to_space2(%d,): %s\n", fd_in, strerror(errno));
             return -errno_;
         }
         else if (rd == 0)
@@ -291,7 +291,7 @@ int read_headers_to_stdout(response *resp)
             goto exit_;
         }
     }
-    printf("<%s():%d>  Error read_headers(): ?\n", __func__, __LINE__);
+    fprintf(stderr, "<%s:%d>  Error read_headers(): ?\n", __func__, __LINE__);
 
 exit_:
     return ret;
@@ -338,11 +338,11 @@ int read_headers(response *resp)
         ret = parse_headers(resp);
         if (ret < 0)
         {
-            printf("<%s():%d>  Error parse_headers(): %d\n", __func__, __LINE__, ret);
+            fprintf(stderr, "<%s:%d>  Error parse_headers(): %d\n", __func__, __LINE__, ret);
             goto exit_;
         }
     }
-    printf("<%s():%d>  Error read_headers(): ?\n", __func__, __LINE__);
+    fprintf(stderr, "<%s:%d>  Error read_headers(): ?\n", __func__, __LINE__);
 
 exit_:
 

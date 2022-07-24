@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/resource.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
@@ -35,8 +36,9 @@ extern char Uri[1024];
 extern int ConnKeepAlive;
 
 typedef struct {
+    int  num_proc;
     int  num_thr;
-    int  num_requests;
+    int  all_requests;
     int  connKeepAlive;
     int  timeout;
     char ip[256];
@@ -70,7 +72,7 @@ typedef struct {
 int child_proc(int, const char*);
 //----------------------------------------------------------------------
 void init_count_thr(void);
-int get_good_conn(void);
+int get_all_req(void);
 int get_max_thr(void);
 int get_num_thr(void);
 void thr_start_(void);
