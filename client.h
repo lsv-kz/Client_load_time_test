@@ -36,7 +36,6 @@ extern char Uri[1024];
 extern int ConnKeepAlive;
 
 typedef struct {
-    int  num_proc;
     int  num_thr;
     int  all_requests;
     int  connKeepAlive;

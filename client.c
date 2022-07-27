@@ -78,9 +78,9 @@ int main(int argc, char *argv[])
     char s[256], path[512];
     char buf_req[1024], first_req[1500];
     int numProc = 1;
-    printf(" %s\n\n", argv[0]);
     int run_ = 1;
 
+    printf(" %s\n\n", argv[0]);
     signal(SIGPIPE, SIG_IGN);
 
     while (run_)
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         sscanf(s, "%d", &numProc);
         if (numProc > 8)
         {
-            printf("! numProc >= 8\n");
+            fprintf(stderr, "! numProc >= 8\n");
             continue;
         }
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
             break;
         if (sscanf(s, "%d", &NumThreads) != 1)
         {
-            printf("<%s:%d>  Error NumThread: %s\n", __func__, __LINE__, s);
+            fprintf(stderr, "<%s:%d>  Error NumThread: %s\n", __func__, __LINE__, s);
             continue;
         }
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
             break;
         if (sscanf(s, "%d", &NumRequests) != 1)
         {
-            printf("<%s:%d>  Error NumRequests: %s\n", __func__, __LINE__, s);
+            fprintf(stderr, "<%s:%d>  Error NumRequests: %s\n", __func__, __LINE__, s);
             continue;
         }
 
@@ -149,13 +149,13 @@ int main(int argc, char *argv[])
         int servSocket = create_client_socket(Host, Port);
         if (servSocket == -1)
         {
-            printf("<%s:%d> Error: create_client_socket(%s:%s)\n", __func__, __LINE__, Host, Port);
+            fprintf(stderr, "<%s:%d> Error: create_client_socket(%s:%s)\n", __func__, __LINE__, Host, Port);
             continue;
         }
 
         if ((ai_family != AF_INET) && (ai_family != AF_INET6))
         {
-            printf("<%s:%d> Error: ai_family: %s\n", __func__, __LINE__, get_str_ai_family(ai_family));
+            fprintf(stderr, "<%s:%d> Error: ai_family: %s\n", __func__, __LINE__, get_str_ai_family(ai_family));
             continue;
         }
 
@@ -214,11 +214,7 @@ int main(int argc, char *argv[])
             num++;
         }
 
-        pid_t pid;
-        while ((pid = wait(NULL)) != -1)
-        {
-            printf("<%s:%d> wait() pid: %d\n", __func__, __LINE__, pid);
-        }
+        while (wait(NULL) != -1);
     }
 
     return 0;

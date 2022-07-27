@@ -12,7 +12,7 @@ void init_count_thr(void)
     allRD = 0;
 }
 //======================================================================
-void inc_good_conn(void)
+void inc_good_req(void)
 {
 pthread_mutex_lock(&mutex1);
     ++all_req;
@@ -99,7 +99,7 @@ Error get_err()
     return err;
 }
 //======================================================================
-void get_request_(request *req, response *resp)
+void get_request_(const request *req, response *resp)
 {
     int num_req = 0, n;
 
@@ -150,9 +150,7 @@ void get_request_(request *req, response *resp)
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
             if (req->connKeepAlive == 1)
-            {
                 break;
-            }
 
             continue;
         }
@@ -167,7 +165,7 @@ void get_request_(request *req, response *resp)
 
         if (!strcmp(Method, "HEAD"))
         {
-            inc_good_conn();
+            inc_good_req();
             
             if ((num_req >= (req->all_requests - 1)) || (req->connKeepAlive == 0))
             {
@@ -187,9 +185,7 @@ void get_request_(request *req, response *resp)
                 shutdown(resp->servSocket, SHUT_RDWR);
                 close(resp->servSocket);
                 if (req->connKeepAlive == 1)
-                {
                     break;
-                }
 
                 continue;
             }
@@ -213,9 +209,7 @@ void get_request_(request *req, response *resp)
                 shutdown(resp->servSocket, SHUT_RDWR);
                 close(resp->servSocket);
                 if (req->connKeepAlive == 1)
-                {
                     break;
-                }
 
                 continue;
             }
@@ -224,14 +218,13 @@ void get_request_(request *req, response *resp)
         if (n > 0)
         {
             add_all_read(n);
-            inc_good_conn();
+            inc_good_req();
         }
 
         if ((num_req >= (req->all_requests - 1)) || (req->connKeepAlive == 0))
         {
             shutdown(resp->servSocket, SHUT_RDWR);
             close(resp->servSocket);
-            break;
         }
     }
 
@@ -246,7 +239,6 @@ void *get_request(void *arg)
     resp.timeout = req->timeout;
     get_request_(req, &resp);
 
-    free(req);
     thr_exit_();
     return NULL;
 }
