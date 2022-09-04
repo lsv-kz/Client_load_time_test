@@ -1,6 +1,54 @@
 #include "client.h"
 
 //======================================================================
+int connect_timeout(int sock, struct sockaddr *addr, int size_)
+{
+    if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
+    {
+        fprintf(stderr, "   <%s> Error fcntl(fd, F_SETFL, O_NONBLOCK): %s\n", __func__, strerror(errno));
+        close(sock);
+        return -1;
+    }
+
+    if (connect(sock, addr, size_) != 0)
+    {
+        if (errno == EINPROGRESS)
+        {
+            if (ConnTimeout == 0)
+                return 0;
+
+            struct pollfd pfds[] = { { .fd = sock, .events = POLLOUT } };
+            int ret = poll(pfds, 1, ConnTimeout * 100);
+            if (ret == -1)
+                return -errno;
+            else if (ret == 0)
+            {
+                return -ETIMEDOUT;
+            }
+
+            int error = 0;
+            socklen_t len = sizeof(error);
+            if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len))
+            {
+                fprintf(stderr, "   <%s> Error getsockopt(): %s\n", __func__, strerror(errno));
+                return -errno;
+            }
+
+            if(error != 0)
+            {
+                fprintf(stderr, "   <%s> Error connect(): %s\n", __func__, strerror(error));
+                return -error;
+            }
+        }
+        else
+        {
+            return -errno;
+        }
+    }
+
+    return 0;
+}
+//======================================================================
 int create_client_socket(const char *host, const char *port)
 {
     int sockfd, n;
@@ -20,7 +68,6 @@ int create_client_socket(const char *host, const char *port)
     {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
             continue;
-        setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&sock_opt, sizeof(sock_opt));
 
         if (connect(sockfd, p->ai_addr, p->ai_addrlen) == 0)
             break;
@@ -46,7 +93,7 @@ int create_client_socket(const char *host, const char *port)
         fprintf(stderr, "<%s> Error getnameinfo(): %s\n", __func__, gai_strerror(n));
         return -1;
     }
-    
+
     ai_family = p->ai_family;
 
     freeaddrinfo(res);
@@ -58,7 +105,7 @@ int create_client_socket(const char *host, const char *port)
 //======================================================================
 int create_client_socket_ip4(const char *ip, const char *port)
 {
-    int sockfd;
+    int sockfd, n;
     struct sockaddr_in sin4;
     int sock_opt = 1;
 
@@ -82,21 +129,10 @@ int create_client_socket_ip4(const char *ip, const char *port)
 
     setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&sock_opt, sizeof(sock_opt));
 
-    if (connect(sockfd, (struct sockaddr *)(&sin4), sizeof(sin4)) != 0)
+    if ((n = connect_timeout(sockfd, (struct sockaddr *)(&sin4), sizeof(sin4))))
     {
-        //fprintf(stderr, "<%s> Error connect(): %s\n", __func__, strerror(errno));
         close(sockfd);
-        return -1;
-    }
-
-    int flags = fcntl(sockfd, F_GETFL);
-    if (flags == -1)
-        fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
-    else
-    {
-        flags |= O_NONBLOCK;
-        if (fcntl(sockfd, F_SETFL, flags) == -1)
-            fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+        return n;
     }
 
     return sockfd;
@@ -104,7 +140,7 @@ int create_client_socket_ip4(const char *ip, const char *port)
 //======================================================================
 int create_client_socket_ip6(const char * host, const char *port)
 {
-    int sockfd;
+    int sockfd, n;
     struct sockaddr_in6 sin6;
     const int sock_opt = 1;
 
@@ -122,21 +158,10 @@ int create_client_socket_ip6(const char * host, const char *port)
 
     setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY,(void *) &sock_opt, sizeof(int));
 
-    if (connect(sockfd, (struct sockaddr *)(&sin6), sizeof(sin6))!=0)
+    if ((n = connect_timeout(sockfd, (struct sockaddr *)(&sin6), sizeof(sin6))))
     {
-        fprintf(stderr, "<%s> Error connect(): %s\n", __func__, strerror(errno));
         close(sockfd);
-        return -1;
-    }
-
-    int flags = fcntl(sockfd, F_GETFL);
-    if (flags == -1)
-        fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
-    else
-    {
-        flags |= O_NONBLOCK;
-        if (fcntl(sockfd, F_SETFL, flags) == -1)
-            fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+        return n;
     }
 
     return sockfd;

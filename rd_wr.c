@@ -1,5 +1,4 @@
 #include "client.h"
-#include <poll.h>
 //    #define POLLIN      0x0001    /* Можно считывать данные */
 //    #define POLLPRI     0x0002    /* Есть срочные данные */
 //    #define POLLOUT     0x0004    /* Запись не будет блокирована */

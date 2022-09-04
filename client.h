@@ -21,6 +21,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <poll.h>
 
 extern char Host[128];
 extern char IP[256];
@@ -34,6 +35,7 @@ extern int Timeout;
 extern char Method[16];
 extern char Uri[1024];
 extern int ConnKeepAlive;
+extern int ConnTimeout;
 
 typedef struct {
     int  num_thr;

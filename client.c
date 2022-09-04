@@ -14,6 +14,8 @@ int NumRequests = 1;
 char Method[16];
 char Uri[1024];
 int ConnKeepAlive = 1;
+
+int ConnTimeout = 'n';
 //======================================================================
 int read_conf_file()
 {
@@ -49,6 +51,11 @@ int read_conf_file()
         else if (sscanf(p1, " Timeout %d", &Timeout) == 1)
         {
             printf("Timeout: %d\n", Timeout);
+            continue;
+        }
+        else if (sscanf(p1, " ConnTimeout %d", &ConnTimeout) == 1)
+        {
+            printf("ConnTimeout: %d\n", ConnTimeout);
             continue;
         }
         else if (sscanf(p1, " EndLine %7s", end_line) == 1)
@@ -114,9 +121,9 @@ int main(int argc, char *argv[])
         if (s[0] == 'q')
             break;
         sscanf(s, "%d", &numProc);
-        if (numProc > 8)
+        if (numProc > 16)
         {
-            fprintf(stderr, "! numProc >= 8\n");
+            fprintf(stderr, "! numProc >= 16\n");
             continue;
         }
 
@@ -215,6 +222,8 @@ int main(int argc, char *argv[])
         }
 
         while (wait(NULL) != -1);
+        time(&now);
+        printf("\n%s", ctime(&now));
     }
 
     return 0;
