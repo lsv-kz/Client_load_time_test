@@ -7,6 +7,7 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <ctype.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -27,7 +28,6 @@ extern char Host[128];
 extern char IP[256];
 extern int ai_family;
 extern char Port[32];
-extern char end_line[8];
 extern int MaxThreads;
 extern int NumThreads;
 extern int NumRequests;
@@ -36,6 +36,8 @@ extern char Method[16];
 extern char Uri[1024];
 extern int ConnKeepAlive;
 extern int ConnTimeout;
+
+extern const char *end_line;
 
 typedef struct {
     int  num_thr;

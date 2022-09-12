@@ -4,7 +4,6 @@ char Host[128] = "0.0.0.0";
 char IP[256];
 int ai_family;
 char Port[32] = "80";
-char end_line[8] = "\r\n";
 int Timeout = 90;
 
 int MaxThreads = 380;
@@ -15,10 +14,23 @@ char Method[16];
 char Uri[1024];
 int ConnKeepAlive = 1;
 
-int ConnTimeout = 'n';
+int ConnTimeout = 1000;
+
+const char *end_line = "\r\n";
+//======================================================================
+int is_number(const char *s)
+{
+    if (!s)
+        return 0;
+    int n = isdigit((int)*(s++));
+    while (*s && n)
+        n = isdigit((int)*(s++));
+    return n;
+}
 //======================================================================
 int read_conf_file()
 {
+    int ret = 0;
     char *p1, *p2, s[256];
     FILE *f = fopen("conf/config.txt", "r");
     if (!f)
@@ -58,25 +70,17 @@ int read_conf_file()
             printf("ConnTimeout: %d\n", ConnTimeout);
             continue;
         }
-        else if (sscanf(p1, " EndLine %7s", end_line) == 1)
+        else
         {
-            printf("end_line: %s\n", end_line);
-            if (!strcmp(end_line, "lf"))
-                strcpy(end_line, "\n");
-            else
-                strcpy(end_line, "\r\n");
+            printf("Error unknown directive: %s\n", p1);
+            ret = 1;
+            break;
         }
     }
 
     fclose(f);
 
-    if (strcmp(end_line, "\n") && strcmp(end_line, "\r\n"))
-    {
-        fprintf(stderr, " Error end_line ?\n");
-        return -1;
-    }
-
-    return 0;
+    return ret;
 }
 //======================================================================
 int main(int argc, char *argv[])
@@ -109,46 +113,57 @@ int main(int argc, char *argv[])
             continue;
 
         printf("-------------- %s ------------------\n%s", path, buf_req);
-        printf("--------------------------------------------\nPort: ");
+        printf("--------------------------------------------\nServer Port: ");
         fflush(stdout);
         std_in(Port, sizeof(Port));
         if (Port[0] == 'q')
             break;
 
-        printf("Num proc: ");
+        if (is_number(Port) == 0)
+        {
+            fprintf(stderr, "!!!   Error [Server Port: %s]\n", Port);
+            continue;
+        }
+        //--------------------------------------------------------------
+        printf("Num Processes: ");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
-        sscanf(s, "%d", &numProc);
-        if (numProc > 16)
+        if (sscanf(s, "%d", &numProc) != 1)
         {
-            fprintf(stderr, "! numProc >= 16\n");
+            fprintf(stderr, "!!!   Error [Num Processes: %s]\n", s);
             continue;
         }
 
-        printf("NumThread x %d: ", numProc);
+        if (numProc > 16)
+        {
+            fprintf(stderr, "!!!   Error [Num Processes > 16]\n");
+            continue;
+        }
+        //--------------------------------------------------------------
+        printf("Num Threads: ");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
         if (sscanf(s, "%d", &NumThreads) != 1)
         {
-            fprintf(stderr, "<%s:%d>  Error NumThread: %s\n", __func__, __LINE__, s);
+            fprintf(stderr, "!!!   Error [Num Threads: %s]\n", s);
             continue;
         }
-
-        printf("NumRequests: ");
+        //--------------------------------------------------------------
+        printf("Num Requests Per Thread: ");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
         if (sscanf(s, "%d", &NumRequests) != 1)
         {
-            fprintf(stderr, "<%s:%d>  Error NumRequests: %s\n", __func__, __LINE__, s);
+            fprintf(stderr, "!!!   Error [Num Requests Per Thread: %s]\n", s);
             continue;
         }
-
+        //--------------------------------------------------------------
         time_t now;
         time(&now);
         printf("%s\n", ctime(&now));

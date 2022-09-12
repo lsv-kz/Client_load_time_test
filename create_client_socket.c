@@ -18,7 +18,7 @@ int connect_timeout(int sock, struct sockaddr *addr, int size_)
                 return 0;
 
             struct pollfd pfds[] = { { .fd = sock, .events = POLLOUT } };
-            int ret = poll(pfds, 1, ConnTimeout * 100);
+            int ret = poll(pfds, 1, ConnTimeout);
             if (ret == -1)
                 return -errno;
             else if (ret == 0)
