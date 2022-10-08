@@ -123,7 +123,7 @@ get_time_connect(&time1, s, sizeof(s));
     printf("-[%d] all_thr=%d, max_thr=%d, %s, all_request=%d\n"
            "   err_sock=%d(%d), err_wr=%d(%d), err_rd=%d(%d)\n"
            "   all read = %lld\n", numProc, i, get_max_thr(), s, get_all_req(),
-                                 err.num_err_sock, err.errno_sock, 
+                                 err.num_err_sock, -err.errno_sock, 
                                  err.num_err_wr, -err.errno_wr, err.num_err_rd, -err.errno_rd,
                                  get_all_read());
 

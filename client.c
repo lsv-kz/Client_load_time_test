@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
             break;
         if (sscanf(s, "%d", &NumThreads) != 1)
         {
-            fprintf(stderr, "!!!   Error [Num Threads: %s]\n", s);
+            fprintf(stderr, "!!!  Error [Num Threads: %s]\n", s);
             continue;
         }
         //--------------------------------------------------------------
