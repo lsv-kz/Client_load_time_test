@@ -18,13 +18,11 @@ int connect_timeout(int sock, struct sockaddr *addr, int size_)
                 return 0;
 
             struct pollfd pfds[] = { { .fd = sock, .events = POLLOUT } };
-            int ret = poll(pfds, 1, ConnTimeout);
+            int ret = poll(pfds, 1, ConnTimeout * 1000);
             if (ret == -1)
                 return -errno;
             else if (ret == 0)
-            {
                 return -ETIMEDOUT;
-            }
 
             int error = 0;
             socklen_t len = sizeof(error);
@@ -53,7 +51,6 @@ int create_client_socket(const char *host, const char *port)
 {
     int sockfd, n;
     struct addrinfo hints, *res = NULL, *p;
-    const int sock_opt = 1;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
@@ -98,7 +95,12 @@ int create_client_socket(const char *host, const char *port)
 
     freeaddrinfo(res);
 
-    ioctl(sockfd, FIONBIO, &sock_opt);
+    if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
+    {
+        fprintf(stderr, "<%s> Error fcntl(): %s\n", __func__, strerror(errno));
+        close(sockfd);
+        return -1;
+    }
 
     return sockfd;
 }

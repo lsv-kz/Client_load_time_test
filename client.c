@@ -113,11 +113,13 @@ int main(int argc, char *argv[])
             continue;
 
         printf("-------------- %s ------------------\n%s", path, buf_req);
-        printf("--------------------------------------------\nServer Port: ");
+        printf("\n--------------------------------------------\nServer Port: ");
         fflush(stdout);
         std_in(Port, sizeof(Port));
         if (Port[0] == 'q')
             break;
+        if (Port[0] == 'c')
+            continue;
 
         if (is_number(Port) == 0)
         {
@@ -130,6 +132,8 @@ int main(int argc, char *argv[])
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
+        if (s[0] == 'c')
+            continue;
         if (sscanf(s, "%d", &numProc) != 1)
         {
             fprintf(stderr, "!!!   Error [Num Processes: %s]\n", s);
@@ -147,20 +151,24 @@ int main(int argc, char *argv[])
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
+        if (s[0] == 'c')
+            continue;
         if (sscanf(s, "%d", &NumThreads) != 1)
         {
             fprintf(stderr, "!!!  Error [Num Threads: %s]\n", s);
             continue;
         }
         //--------------------------------------------------------------
-        printf("Num Requests Per Thread: ");
+        printf("Num Requests: ");
         fflush(stdout);
         std_in(s, sizeof(s));
         if (s[0] == 'q')
             break;
+        if (s[0] == 'c')
+            continue;
         if (sscanf(s, "%d", &NumRequests) != 1)
         {
-            fprintf(stderr, "!!!   Error [Num Requests Per Thread: %s]\n", s);
+            fprintf(stderr, "!!!   Error [Num Requests: %s]\n", s);
             continue;
         }
         //--------------------------------------------------------------

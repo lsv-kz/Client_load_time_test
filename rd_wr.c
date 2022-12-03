@@ -410,14 +410,13 @@ int read_line(FILE *f, char *s, int size)
                 wr = 1;
                 continue;
             }
+
             return len;
         }
         else if (wr == 0)
             continue;
         else if (ch == '#')
-        {
             wr = 0;
-        }
         else if (ch != '\r')
         {
             *(p++) = (char)ch;
@@ -509,10 +508,14 @@ int read_req_file_(FILE *f, char *req, int size)
                         while (len < size)
                         {
                             if ((ret = fread(p, 1, size - len - 1, f)) <= 0)
+                            {
+                                *p = 0;
                                 return len;
+                            }
                             len += ret;
                             p += ret;
                         }
+
                         *p = 0;
                         if (feof(f))
                             return len;
